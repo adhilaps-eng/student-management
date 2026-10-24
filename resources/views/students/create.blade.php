@@ -1,83 +1,138 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Student</title>
-</head>
 
-<body>
+@extends('layouts.app')
 
-    <h1>Add Student</h1>
+@section('title', 'Add Student')
 
-    <form method="POST" action="/students">
+@section('content')
 
-        @csrf
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Add Student</h2>
+        <p class="text-muted mb-0">Enter the student's information below</p>
+    </div>
 
-        <div>
-            <label>Name</label>
-            <input type="text" name="name">
-        </div>
+    <a href="/students" class="btn btn-outline-secondary">
+        Back to Student List
+    </a>
+</div>
 
-        <br>
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
 
-        <div>
-            <label>Email</label>
-            <input type="email" name="email">
-        </div>
+        <form method="POST" action="/students">
+            @csrf
 
-        <br>
+            <div class="row g-3">
 
-        <div>
-            <label>Phone</label>
-            <input type="text" name="phone">
-        </div>
+                <div class="col-md-6">
+                    <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                    <input type="text" id="name" name="name"
+                           value="{{ old('name') }}"
+                           class="form-control @error('name') is-invalid @enderror">
 
-        <br>
+                    @error('name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-        <div>
-            <label>Gender</label>
-            <select name="gender">
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-        </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" id="email" name="email"
+                           value="{{ old('email') }}"
+                           class="form-control @error('email') is-invalid @enderror">
 
-        <br>
+                    @error('email')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-        <div>
-            <label>Date of Birth</label>
-            <input type="date" name="date_of_birth">
-        </div>
+                <div class="col-md-6">
+                    <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                    <input type="text" id="phone" name="phone"
+                           value="{{ old('phone') }}"
+                           class="form-control @error('phone') is-invalid @enderror">
 
-        <br>
+                    @error('phone')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-        <div>
-            <label>Address</label>
-            <textarea name="address"></textarea>
-        </div>
+                <div class="col-md-6">
+                    <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                    <select id="gender" name="gender"
+                            class="form-select @error('gender') is-invalid @enderror">
+                        <option value="">Select Gender</option>
+                        <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                        <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                    </select>
 
-        <br>
+                    @error('gender')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-        <div>
-            <label>Admission Date</label>
-            <input type="date" name="admission_date">
-        </div>
+                <div class="col-md-6">
+                    <label for="date_of_birth" class="form-label">Date of Birth</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth"
+                           value="{{ old('date_of_birth') }}"
+                           class="form-control @error('date_of_birth') is-invalid @enderror">
 
-        <br>
+                    @error('date_of_birth')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-        <div>
-            <label>Status</label>
-            <select name="status">
-                <option value="1">Active</option>
-                <option value="0">Inactive</option>
-            </select>
-        </div>
+                <div class="col-md-6">
+                    <label for="admission_date" class="form-label">Admission Date <span class="text-danger">*</span></label>
+                    <input type="date" id="admission_date" name="admission_date"
+                           value="{{ old('admission_date') }}"
+                           class="form-control @error('admission_date') is-invalid @enderror">
 
-        <br>
+                    @error('admission_date')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-        <button type="submit">Save Student</button>
+                <div class="col-12">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea id="address" name="address" rows="3"
+                              class="form-control @error('address') is-invalid @enderror">{{ old('address') }}</textarea>
 
-    </form>
+                    @error('address')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-</body>
-</html>
+                <div class="col-md-6">
+                    <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                    <select id="status" name="status"
+                            class="form-select @error('status') is-invalid @enderror">
+                        <option value="1" {{ old('status', '1') == '1' ? 'selected' : '' }}>Active</option>
+                        <option value="0" {{ old('status', '1') == '0' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+
+                    @error('status')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Save Student
+                </button>
+
+                <a href="/students" class="btn btn-light border">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@endsection
