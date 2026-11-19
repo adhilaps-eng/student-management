@@ -38,7 +38,7 @@
                     @endif
                 </p>
             </div>
-            
+
             <div class="d-flex flex-wrap gap-2">
                 @if ($isAdmin)
                     <a href="{{ url('/admin/teachers/create') }}" class="btn btn-success">
@@ -134,7 +134,7 @@
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body">
                         <h6 class="text-muted">Student Directory</h6>
-                        <p class="text-muted small mb-2">View the list of students (read-only access).</p>
+                        <p class="text-muted small mb-2">View the student list (read-only).</p>
                         <a href="{{ url('/students') }}" class="btn btn-sm btn-outline-primary">
                             View Student List
                         </a>
@@ -158,7 +158,7 @@
 
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3">
-                <h5 class="mb-0">My Student Details</h5>
+                <h5 class="mb-0">Student Profile</h5>
             </div>
             <div class="card-body">
                 <div class="row g-3">

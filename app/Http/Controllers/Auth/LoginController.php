@@ -61,7 +61,7 @@ class LoginController extends Controller
          return redirect('/students');
   } 
 
-       return redirect()->route('dashboard');
+       return redirect('/students');
     }
 
     public function destroy(Request $request): RedirectResponse
