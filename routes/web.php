@@ -5,8 +5,18 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegistrationController;
 use App\Http\Controllers\Admin\RegistrationApprovalController;
+use App\Http\Controllers\Admin\TeacherController;
+//use App\Http\Controllers\Admin\StudentManagementController;
+use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\RegistrationRequest;
 
 
+Route::middleware(['auth', 'role:super-admin,admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Teacher & Student CRUD Management
+    Route::resource('teachers', TeacherController::class);
+    // Route::resource('students', StudentManagementController::class);
+});
 
 Route::get('/', function () {
     return view('welcome');
@@ -52,19 +62,38 @@ Route::post('/logout', [LoginController::class, 'destroy'])
     ->name('logout');
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $user = auth()->user();
+    $role = $user->role?->slug;
+
+    $data = [];
+
+    if (in_array($role, ['super-admin', 'admin'], true)) {
+        $data['totalStudents'] = Student::count();
+        $data['totalTeachers'] = Teacher::count();
+        $data['pendingRequests'] = RegistrationRequest::where('status', 'pending')->count();
+    } elseif ($role === 'teacher') {
+        $data['teacher'] = Teacher::where('user_id', $user->id)->first();
+    } elseif ($role === 'student') {
+        $data['student'] = Student::where('user_id', $user->id)->first();
+    }
+
+    return view('dashboard', compact('data', 'role'));
 })
     ->middleware(['auth', 'role:super-admin,admin,teacher,student'])
     ->name('dashboard');
 
-// Only logged-in users can access student pages.
-Route::middleware(['auth', 'role:super-admin,admin'])->group(function () {
-    Route::get('/students', [StudentController::class, 'index']);
-    Route::get('/students/create', [StudentController::class, 'create']);
-    Route::post('/students', [StudentController::class, 'store']);
-    Route::get('/students/{student}/edit', [StudentController::class, 'edit']);
-    Route::put('/students/{student}', [StudentController::class, 'update']);
-    Route::delete('/students/{student}', [StudentController::class, 'destroy']);
+// View student list: Admin, Super Admin, Teacher, and Student
+Route::middleware(['auth', 'role:super-admin,admin,teacher,student'])->group(function () {
+    Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+});
+
+// Create, Edit, Update, Delete students: Admin, Super Admin, and Teacher
+Route::middleware(['auth', 'role:super-admin,admin,teacher'])->group(function () {
+    Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
+    Route::post('/students', [StudentController::class, 'store'])->name('students.store');
+    Route::get('/students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
+    Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
+    Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
 });
 
 // Admin Registration Approval

@@ -105,6 +105,26 @@ class RegistrationController extends Controller
                 ]));
         }
 
+            // 1. Create the User login account
+                $user = \App\Models\User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                    'role_id' => $studentRole->id,
+                ]);
+
+            // 2. Automatically create the linked Student profile record
+                    \App\Models\Student::create([
+                        'user_id' => $user->id,
+                        'admission_number' => 'ADM-' . rand(10000, 99999), // Generates a unique admission ID
+                        'grade' => $request->grade ?? 'UKG', // Adjust if your form collects grade/class
+                    ]);
+
+                    // 3. Log them in and redirect to dashboard
+                    auth()->login($user);
+
+                    return redirect()->route('dashboard')->with('success', 'Registration successful! Welcome to your student portal.');
+
         // Generate a secure six-digit OTP
         $otpCode = (string) random_int(100000, 999999);
 

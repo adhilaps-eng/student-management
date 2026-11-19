@@ -1,123 +1,194 @@
-
 @extends('layouts.app')
 
-@section('title', 'Dashboard | Student Management System')
+@section('title', 'Dashboard')
 
 @section('content')
 @php
     $user = auth()->user();
-    $role = $user->role?->slug;
+    $roleSlug = strtolower((string) ($role ?? $user?->role?->slug ?? ''));
+    $roleId = $user?->role_id;
+
+    $isAdmin = in_array($roleSlug, ['super-admin', 'admin'], true) || in_array((int) $roleId, [1, 2], true);
+    $isTeacher = $roleSlug === 'teacher' || (int) $roleId === 3;
+    $isStudent = $roleSlug === 'student' || (int) $roleId === 4;
+
+    $studentRecord = $data['student'] ?? \App\Models\Student::where('user_id', $user->id)->first();
+    $teacherRecord = $data['teacher'] ?? \App\Models\Teacher::where('user_id', $user->id)->first();
+    $totalStudentsCount = $data['totalStudents'] ?? \App\Models\Student::count();
+    $totalTeachersCount = $data['totalTeachers'] ?? \App\Models\Teacher::count();
+    $pendingRequestsCount = $data['pendingRequests'] ?? \App\Models\RegistrationRequest::where('status', 'pending')->count();
 @endphp
 
-<div class="dashboard-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div>
-        <h1 class="dashboard-title">Dashboard</h1>
-        <p class="dashboard-subtitle mb-0">
-            Welcome back, {{ $user->name }}. Here's your workspace.
-        </p>
+<div class="mb-4">
+    {{-- Unified Dashboard Header (Same Route for All Roles) --}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <span class="badge bg-primary-subtle text-primary mb-2">
+                    Unified Dashboard · {{ strtoupper($roleSlug ?: ($user?->role?->name ?? 'USER')) }}
+                </span>
+                <h3 class="mb-1">Welcome back, {{ $user->name }}!</h3>
+                <p class="text-muted mb-0">
+                    @if ($isAdmin)
+                        Full system overview and access to all administrative features.
+                    @elseif ($isTeacher)
+                        Faculty workspace — view student lists and manage student records.
+                    @else
+                        Student workspace — view your profile details and browse the student list.
+                    @endif
+                </p>
+            </div>
+            
+            <div class="d-flex flex-wrap gap-2">
+                @if ($isAdmin)
+                    <a href="{{ url('/admin/teachers/create') }}" class="btn btn-success">
+                        <i class="bi bi-person-plus-fill me-1"></i> Add Teacher
+                    </a>
+                @endif
+
+                @if ($isAdmin || $isTeacher)
+                    <a href="{{ url('/students/create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Add Student
+                    </a>
+                @endif
+
+                <a href="{{ url('/students') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-people me-1"></i>
+                    {{ $isStudent ? 'View Student List' : 'Manage Students' }}
+                </a>
+            </div>
+        </div>
     </div>
 
-    <span class="dashboard-role-badge">
-        <i class="bi bi-shield-check me-1"></i>
-        {{ $user->role?->name ?? 'User' }}
-    </span>
+    {{-- 1. ADMIN / SUPER ADMIN VIEW --}}
+    @if ($isAdmin)
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="text-muted">Total Students</h6>
+                        <h3 class="mb-2">{{ $totalStudentsCount }}</h3>
+                        <a href="{{ url('/students') }}" class="small text-decoration-none">Go to Students →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="text-muted">Total Teachers</h6>
+                        <h3 class="mb-2">{{ $totalTeachersCount }}</h3>
+                        <a href="{{ route('admin.teachers.index') }}" class="small text-decoration-none">Go to Teachers →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="text-muted">Pending Registrations</h6>
+                        <h3 class="mb-2">{{ $pendingRequestsCount }}</h3>
+                        <a href="{{ route('admin.registration-requests.index') }}" class="small text-decoration-none">Review Requests →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {{-- 2. TEACHER VIEW --}}
+    @elseif ($isTeacher)
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="text-muted">Employee Code</h6>
+                        <h5 class="mb-0">{{ $teacherRecord->employee_code ?? 'N/A' }}</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="text-muted">Student CRUD Access</h6>
+                        <h5 class="text-success mb-0">View, Add, Edit & Delete</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="text-muted">Student Directory</h6>
+                        <a href="{{ url('/students') }}" class="btn btn-sm btn-primary mt-1">
+                            Open Student Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {{-- 3. STUDENT VIEW --}}
+    @else
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="text-muted">Student Directory</h6>
+                        <p class="text-muted small mb-2">View the list of students (read-only access).</p>
+                        <a href="{{ url('/students') }}" class="btn btn-sm btn-outline-primary">
+                            View Student List
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="text-muted">Account Status</h6>
+                        @if ($studentRecord?->status)
+                            <span class="badge bg-success-subtle text-success">Active</span>
+                        @else
+                            <span class="badge bg-secondary-subtle text-secondary">Standard Account</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">My Student Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="small text-muted">Name</div>
+                        <div class="fw-semibold">{{ $studentRecord->name ?? $user->name }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-muted">Email</div>
+                        <div class="fw-semibold">{{ $studentRecord->email ?? $user->email }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-muted">Phone</div>
+                        <div class="fw-semibold">{{ $studentRecord->phone ?? '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-muted">Gender</div>
+                        <div class="fw-semibold">{{ $studentRecord->gender ?? '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-muted">Date of Birth</div>
+                        <div class="fw-semibold">{{ $studentRecord->date_of_birth ?? '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-muted">Address</div>
+                        <div class="fw-semibold">{{ $studentRecord->address ?? '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
-
-@if (in_array($role, ['super-admin', 'admin'], true))
-
-    <div class="dashboard-welcome-card mb-4">
-        <div>
-            <span class="dashboard-eyebrow">STUDENT MANAGEMENT SYSTEM</span>
-            <h2 class="mt-2">Manage your school in one place</h2>
-            <p class="mb-3">
-                Manage student records and access the features available to your role.
-            </p>
-
-            <a href="{{ url('/students') }}" class="btn btn-primary">
-                <i class="bi bi-people-fill me-2"></i>
-                View Students
-            </a>
-        </div>
-        <div class="dashboard-welcome-icon">
-            <i class="bi bi-mortarboard-fill"></i>
-        </div>
-    </div>
-
-    <h5 class="dashboard-section-title mb-3">Quick Access</h5>
-
-    <div class="row g-3 mb-4">
-        <div class="col-md-6 col-xl-4">
-            <a href="{{ url('/students') }}" class="dashboard-module-card">
-                <div class="dashboard-module-icon blue">
-                    <i class="bi bi-people-fill"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6>Student Management</h6>
-                    <p>View, search and manage student records.</p>
-                    <span>Open Students <i class="bi bi-arrow-right ms-1"></i></span>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-            <div class="dashboard-module-card">
-                <div class="dashboard-module-icon purple">
-                    <i class="bi bi-person-workspace"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6>Teacher Management</h6>
-                    <p>Teacher profiles and account management.</p>
-                    <span class="module-status">Planned module</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-            <div class="dashboard-module-card">
-                <div class="dashboard-module-icon green">
-                    <i class="bi bi-journal-bookmark-fill"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6>Classes & Academic Years</h6>
-                    <p>Organize class sections and academic years.</p>
-                    <span class="module-status">Planned module</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-@elseif ($role === 'teacher')
-
-    <div class="dashboard-role-card">
-        <div class="dashboard-module-icon purple mb-3">
-            <i class="bi bi-person-workspace"></i>
-        </div>
-        <h4>Teacher Dashboard</h4>
-        <p>
-            Your assigned classes, student attendance and academic activities
-            will be available here as those modules are implemented.
-        </p>
-    </div>
-
-@elseif ($role === 'student')
-
-    <div class="dashboard-role-card">
-        <div class="dashboard-module-icon blue mb-3">
-            <i class="bi bi-person-fill"></i>
-        </div>
-        <h4>Student Dashboard</h4>
-        <p>
-            Your class, attendance, examination results and academic
-            information will be available here as those modules are implemented.
-        </p>
-    </div>
-
-@else
-
-    <div class="alert alert-warning">
-        Your account does not have a recognized role. Please contact the administrator.
-    </div>
-
-@endif
 @endsection
-

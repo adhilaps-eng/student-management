@@ -7,16 +7,10 @@
     <title>@yield('title', 'Student Management System')</title>
 
     <!-- Bootstrap CSS -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Bootstrap Icons -->
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-    >
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Laravel CSS and JavaScript through Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -26,21 +20,20 @@
 
     @php
         $currentRole = auth()->user()?->role?->slug;
-
         $isPublicPage = request()->routeIs('home', 'login', 'register*');
-
         $showSidebar = auth()->check() && !$isPublicPage;
-
         $pendingRegistrationsCount = in_array($currentRole, ['super-admin', 'admin'], true)
             ? \App\Models\RegistrationRequest::where('status', 'pending')->count()
             : 0;
     @endphp
 
+                        
+                            
+
     <!-- Top Navigation -->
     @if (request()->routeIs('home'))
 
         <header class="public-site-header">
-
             {{-- Top utility bar --}}
             <div class="public-topbar">
                 <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -238,29 +231,35 @@
                             <i class="bi bi-chevron-right sidebar-link-chevron"></i>
                         </a>
 
-                        <!-- Admin & Super Admin Menus -->
-                        @if (in_array($currentRole, ['super-admin', 'admin'], true))
-
-                            <!-- Student Management -->
+                        <!-- Student Directory (Accessible to Admin, Super Admin, Teacher, Student) -->
+                        @if (in_array($currentRole, ['super-admin', 'admin', 'teacher', 'student'], true))
                             <div class="sidebar-section-label mt-4">
                                 STUDENT MANAGEMENT
                             </div>
 
                             <a
                                 href="{{ url('/students') }}"
-                                class="sidebar-link {{ request()->is('students') || request()->is('students/*/edit') ? 'active' : '' }}"
+                                class="sidebar-link {{ request()->is('students') || request()->is('students/*') ? 'active' : '' }}"
                             >
                                 <i class="bi bi-people-fill sidebar-link-icon"></i>
-                                <span>Students</span>
+                                <span>{{ $currentRole === 'student' ? 'Student List' : 'Students' }}</span>
                                 <i class="bi bi-chevron-right sidebar-link-chevron"></i>
                             </a>
+                        @endif
+
+                        <!-- Admin & Super Admin Only Menus -->
+                        @if (in_array($currentRole, ['super-admin', 'admin'], true))
+                            <!-- Teacher Management Section -->
+                            <div class="sidebar-section-label mt-4">
+                                TEACHER MANAGEMENT
+                            </div>
 
                             <a
-                                href="{{ url('/students/create') }}"
-                                class="sidebar-link {{ request()->is('students/create') ? 'active' : '' }}"
+                                href="{{ route('admin.teachers.index') }}"
+                                class="sidebar-link {{ request()->routeIs('admin.teachers.*') ? 'active' : '' }}"
                             >
-                                <i class="bi bi-person-plus-fill sidebar-link-icon"></i>
-                                <span>Add Student</span>
+                                <i class="bi bi-person-badge-fill sidebar-link-icon"></i>
+                                <span>Teachers</span>
                                 <i class="bi bi-chevron-right sidebar-link-chevron"></i>
                             </a>
 
@@ -308,7 +307,6 @@
                                 class="collapse settings-submenu {{ request()->is('settings*') ? 'show' : '' }}"
                             >
                                 @if ($currentRole === 'super-admin')
-
                                     <a href="{{ url('/settings/roles') }}"
                                        class="sidebar-link sidebar-sub-link">
                                         <i class="bi bi-person-badge sidebar-link-icon"></i>
@@ -326,7 +324,6 @@
                                         <i class="bi bi-shield-lock sidebar-link-icon"></i>
                                         <span>Role-Based Permissions</span>
                                     </a>
-
                                 @endif
 
                                 <a href="{{ url('/settings/users') }}"
@@ -335,7 +332,6 @@
                                     <span>Users</span>
                                 </a>
                             </div>
-
                         @endif
 
                         <!-- Sidebar Footer -->
